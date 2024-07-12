@@ -1,14 +1,17 @@
 import { useEffect, useReducer } from "react";
-import Header from "./Header";
-import Main from "./Main";
-import Loader from "./Loader";
-import Error from "./Error";
+import Header from "./components/Header";
+import Main from "./components/Main";
+import Loader from "./components/Loader";
+import Error from "./components/Error";
+import StartScreen from "./components/StartScreen";
+import Question from "./components/Question";
 
 const intialState = {
   questions: [],
 
   // 'loading', 'error', 'ready', 'active', 'finished'
-  status: "loading"
+  status: "active",
+  index: 0,
 };
 
 function reducer(state, action) {
@@ -17,12 +20,18 @@ function reducer(state, action) {
       return {
         ...state,
         questions: action.payload,
-        status: "ready"
+        status: "ready",
       };
     case "dataFailed":
       return {
         ...state,
-        status: "error"
+        status: "error",
+      };
+    case "start":
+      return {
+        ...state,
+        status: "active",
+        index: 0,
       };
     default:
       throw new Error("Action is unknown");
@@ -31,7 +40,8 @@ function reducer(state, action) {
 
 export default function App() {
   const [state, dispatch] = useReducer(reducer, intialState);
-  const { questions, status } = state;
+  const { questions, status, index } = state;
+  const numQuestions = questions.length;
 
   useEffect(() => {
     async function fetchQuestions() {
@@ -40,11 +50,11 @@ export default function App() {
         const data = await res.json();
         dispatch({
           type: "dataReceived",
-          payload: data
+          payload: data,
         });
       } catch (error) {
         dispatch({
-          type: "dataFailed"
+          type: "dataFailed",
         });
       }
     }
@@ -57,6 +67,10 @@ export default function App() {
       <Main>
         {status === "loading" && <Loader />}
         {status === "error" && <Error />}
+        {status === "ready" && (
+          <StartScreen numberQuestions={numQuestions} dispatch={dispatch} />
+        )}
+        {status === "active" && <Question question={questions[index]} />}
       </Main>
     </div>
   );
